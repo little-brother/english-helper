@@ -2,7 +2,7 @@
 // @name Cambridge
 // @namespace EnglishHelper
 // @description Double-click or made a selection and press F1 to get the meaning of the word from Cambridge dictionary
-// @version 1.4
+// @version 1.5
 // @grant GM.xmlHttpRequest
 // @grant GM.getValue
 // @grant GM.setValue
@@ -175,8 +175,8 @@ function getWord(word, callback) {
 			return callback(null, data); 
 		}
 
-		var finded = ($html.querySelector('#dataset-british .entry-body .pos-header .headword .hw') || {textContent: word}).textContent;	
-		var $block = $html.querySelectorAll('#dataset-british .entry-body .sense-block');
+		var finded = ($html.querySelector('.entry-body .pos-header .headword .hw') || {textContent: word}).textContent;	
+		var $block = $html.querySelectorAll('.page [id^=dataset] .entry-body .sense-block');
 		
 		var means = Array.prototype.map.call($block && $block.length ? $block : $html.querySelectorAll('#dataset-american-english .entry-body .sense-block') || [], function ($e) {
 			try {
