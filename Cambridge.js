@@ -176,7 +176,7 @@ function getWord(word, callback) {
 		}
 
 		var finded = ($html.querySelector('.entry-body .pos-header .headword .hw') || {textContent: word}).textContent;	
-		var $block = $html.querySelectorAll('.page [id^=dataset] .entry-body .sense-block');
+		var $block = $html.querySelectorAll('.page [id^=dataset]:first-of-type .entry-body .sense-block');
 		
 		var means = Array.prototype.map.call($block && $block.length ? $block : $html.querySelectorAll('#dataset-american-english .entry-body .sense-block') || [], function ($e) {
 			try {
@@ -260,7 +260,7 @@ function playUrl(url) {
 	} 
 	
 	var request = new XMLHttpRequest();
-	request.open('GET', url);
+	request.open('GET', 'https://dictionary.cambridge.org/' + url);
 	request.responseType = 'arraybuffer';
 	request.onload = function() {
 			audioCtx.decodeAudioData(request.response, function(data) {
