@@ -2,12 +2,14 @@
 
 There is a pack of FireFox/GreaseMonkey's scripts for English learners.
 
-* **Cambridge**<br> 
-  Show the British meaning of word by double click or F1.
-
+* **Cambridge** (obsolete since they changed html)<br> 
+  ~~Show the British meaning of word by double click or F1.~~
+  
 * **LinguaLeo**<br>
-  Translate word by double click or Ctrl + F1.<br>
-  If the word is not found then the Yandex translation will be shown.
+  Translate word by double click or F1 for a selected text.<br>
+  ~~If the word is not found then the Yandex translation will be shown.~~<br>
+  There is no Yandex translation since Yandex stopped free access to API.<br>
+  You should login on LinguaLeo site in a browser.
 
 * **Notebook.js**<br>
   Simple words and phrases store.<br>
