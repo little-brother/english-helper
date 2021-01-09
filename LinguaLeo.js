@@ -2,7 +2,7 @@
 // @name LinguaLeo
 // @namespace EnglishHelper
 // @description Double-click or made a selection and press F1 with Control to translate the word
-// @version 1.4
+// @version 1.5
 // @grant GM.xmlHttpRequest
 // @grant GM.getValue
 // @grant GM.setValue
@@ -13,40 +13,45 @@ var version = parseFloat(GM.info.script.version);
 
 var css = `
 #lingualeo-hint {position: fixed; background: white; padding: 20px;  padding-bottom: 5px; font-size: 14px; font-family: Arial; cursor: default; border: 1px solid #bbb; z-index: 10000; top: 0; max-width: 400px; width: 400px; display: none;}
-#lingualeo-hint #word {display: block; text-align: center; font-size: 24px; border: none; border-bottom: 1px solid #bbb; margin: 0; width: 100%}
+#lingualeo-hint #word {display: block; text-align: center; font-size: 24px; border: none; border-bottom: 1px solid #bbb; margin: 0; width: 100%; color: #000 !important;}
 #lingualeo-hint #transcription {text-align: center; color: #666; font-size: 20px;}
 #lingualeo-hint #transcription:empty {margin-bottom: 10px;}
-#lingualeo-hint #means {text-align: left; overflow-y: auto; font-size: 14px; text-transform: lowercase;}
+#lingualeo-hint #means {text-align: left; overflow-y: auto; font-size: 14px; text-transform: lowercase; color: #000 !important;}
 #lingualeo-hint #means ul {margin-left: 10px; padding: 0;}
 #lingualeo-hint #means ul li {margin: 5px; list-style: disc; padding: 0;}
 `;
 
-var $style = document.createElement('style');
-$style.type = 'text/css';
-$style.appendChild(document.createTextNode(css));
-document.head.appendChild($style);
+var $style, $hint, $input, $transcription, $means;
+  
+function init() {
+  $style = document.createElement('style');
+  $style.type = 'text/css';
+  $style.appendChild(document.createTextNode(css));
+  document.head.appendChild($style);
 
-var $hint = document.createElement('div');
-$hint.id = 'lingualeo-hint';
-document.body.appendChild($hint);
+  $hint = document.createElement('div');
+  $hint.id = 'lingualeo-hint';
+  document.body.appendChild($hint);
 
-$hint.addEventListener('mouseleave', () => $hint.style.display = 'none');
+  $hint.addEventListener('mouseleave', () => $hint.style.display = 'none');
 
+  $input = document.createElement('input');
+  $input.id = 'word';
+  $input.onclick = (event) => event.stopImmediatePropagation(); 
+  $input.onkeydown = (event) => event.key == 'Enter' ? showHint($input.value, true) : '';
+  $hint.appendChild($input);
 
-var $input = document.createElement('input');
-$input.id = 'word';
-$input.onclick = (event) => event.stopImmediatePropagation(); 
-$input.onkeydown = (event) => event.key == 'Enter' ? showHint($input.value, true) : '';
-$hint.appendChild($input);
+  $transcription = document.createElement('div');
+  $transcription.id = 'transcription';
+  $hint.appendChild($transcription);
 
-var $transcription = document.createElement('div');
-$transcription.id = 'transcription';
-$hint.appendChild($transcription);
+  $means = document.createElement('div');
+  $means.id = 'means';
+  $hint.appendChild($means);
+}  
 
-var $means = document.createElement('div');
-$means.id = 'means';
-$hint.appendChild($means);
-
+init();
+  
 var mouseX = null;
 var mouseY = null;
 
@@ -65,11 +70,14 @@ function getSelectedText () {
 	return text;
 }
 
-document.addEventListener('dblclick', (event) => event.ctrlKey ? showHint(getSelectedText()) : '');
-document.addEventListener('keydown', (event) => event.key == 'F1' && event.ctrlKey ? showHint(getSelectedText()) : '');
+document.addEventListener('dblclick', (event) => showHint(getSelectedText()));
+document.addEventListener('keydown', (event) => event.key == 'F1' && showHint(getSelectedText()));
 document.addEventListener('keydown', (event) => event.key == 'Escape' ? $hint.style.display = 'none' : '');
 
 function showHint(word, stick) {
+  if (!document.body.contains($hint)) 
+    init();
+   
 	if (!word)
 		return;
 	
@@ -108,12 +116,13 @@ function getWord(word, callback) {
 	function onload (response) {
 		var res = response.responseText;
 		try {
-			res = JSON.parse(res).userdict3;
+			res = JSON.parse(res);
 		} catch (err) {
+      console.error(err, res);
 			res = undefined;
 		}
 
-		if (!res || !res.translations) {
+		if (!res || !res.translate) {
 			return GM.xmlHttpRequest({
 				method: 'POST',
 				url: 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20180618T185454Z.6648aed2c29cd85f.f5e63f885e93675e319a3c0f7c916a6588261b32&lang=en-ru&text=' + encodeURI(word),
@@ -133,7 +142,7 @@ function getWord(word, callback) {
 		
 		var data = {
 			word, 
-			means: res.translations && res.translations
+			means: res.translate
 				.sort((a, b) => b.translate_votes - a.translate_votes)
 				.map((e) => e.translate_value.trim())
 				.filter((e, i, arr) => arr.indexOf(e) == i) || [], 
@@ -141,6 +150,8 @@ function getWord(word, callback) {
 			transcription: res.transcription, 
 			version
 		};
+    
+    
 		GM.setValue(word, JSON.stringify(data)).then(() => '');
 		words[word] = data;
 
@@ -157,7 +168,7 @@ function getWord(word, callback) {
 		} catch (err) {
 			GM.xmlHttpRequest({
 				method: 'GET', 
-				url: 'http://lingualeo.com/userdict3/getTranslations?word_value=' + encodeURI(word.toLowerCase()), 
+				url: 'http://api.lingualeo.com/getTranslates?word=' + encodeURI(word.toLowerCase()), 
 				onload
 			});
 		}	
